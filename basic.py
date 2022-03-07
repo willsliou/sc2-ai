@@ -8,7 +8,13 @@ import random as random
 
 class WorkerRushBot(BotAI):
     async def on_step(self, iteration: int):
-        print(f"The iteration is {iteration}")
+        print(f"{iteration}, n_workers: {self.workers.amount}, n_idle_workers: {self.workers.idle.amount},", \
+        f"minerals: {self.minerals}, gas: {self.vespene}, cannons: {self.structures(UnitTypeId.PHOTONCANNON).amount},", \
+        f"pylons: {self.structures(UnitTypeId.PYLON).amount}, nexus: {self.structures(UnitTypeId.NEXUS).amount}", \
+        f"gateways: {self.structures(UnitTypeId.GATEWAY).amount}, cybernetics cores: {self.structures(UnitTypeId.CYBERNETICSCORE).amount}", \
+        f"stargates: {self.structures(UnitTypeId.STARGATE).amount}, voidrays: {self.units(UnitTypeId.VOIDRAY).amount}, supply: {self.supply_used}/{self.supply_cap}")
+    
+        await self.distribute_workers()
 
         # If we have a Nexus
         if self.townhalls:
@@ -34,6 +40,15 @@ class WorkerRushBot(BotAI):
                     await self.build(UnitTypeId.PYLON, near=pos)
 
 
+            # Build cannon
+            elif not self.structures(UnitTypeId.FORGE):
+                # If we can afford a forge, build one near the Nexus
+                if self.can_afford(UnitTypeId.FORGE):
+                    await self.build(UnitTypeId.FORGE, near = self.structures(UnitTypeId.PYLON).closest_to(nexus))
+
+            elif self.structures(UnitTypeId.FORGE).ready and self.structures(UnitTypeId.PHOTONCANNON.amount) < 3:
+                if self.can_afford(UnitTypeId.PHOTONCANNON):
+                    await self.build(UnitTypeId.PHOTONCANNON, near = nexus)
 
         # If we don't have a Nexus
         else:
